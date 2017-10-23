@@ -1,0 +1,338 @@
+//	Processing.js CogCloud
+// Chris Henden 2011
+
+void setup() {
+  size(600, 600);
+  frameRate(30);
+// noLoop();
+}
+
+void draw() {
+  background(#efefef);
+
+  for(int i=0; i<numCogs;i++){
+  	cogs[i].draw();
+  }
+}
+
+
+int numCogs;
+Cog[] cogs = new Cog[1600];
+newCogCloud();
+
+void newCogCloud(){
+	// initialise cog with parameters
+
+	numCogs = int(Math.floor(random(5,12)));
+
+	int centreX = 300;
+	int centreY = 300;
+	int teethHeight = int(Math.floor(random(6,10)));
+	int numTeeth = int(Math.floor(random(4,20)));
+
+	int speedFactor = int(Math.floor(random(7,10)));
+	float speed = (2*Math.PI)/Math.pow(2,speedFactor); // gets added to rotation
+
+	for(int i=0; i<numCogs; i++){
+
+		int aRadius;
+		// first cog needs to be of a standardish size
+		i == 0 ? aRadius = int(random(10,50)) : aRadius = int(random(5,80));	
+
+		if( int(random(2))==1 ){
+			aCog = new SquareTeethCog(aRadius, centreX, centreY, numTeeth, teethHeight, speed);
+		}else{
+			aCog = new TriangleTeethCog(aRadius, centreX, centreY, numTeeth, teethHeight, speed);		
+		}
+
+		cogs[i] = aCog;
+	}
+
+	for(int i=0; i<numCogs;i++){
+			if(i>0){
+			cogs[i].engage(cogs[int(random(i))], Math.random() * (2*Math.PI)); 
+			//cogs[i].engage(cogs[i-1], Math.random() * (2*Math.PI)); 
+		}
+	}
+}
+
+class SquareTeethCog extends Cog {
+
+	SquareTeethCog(int iradius, int icX, int icY, inumTeeth, iteethHeight,ispeed) {
+		super(iradius, icX,icY,inumTeeth,iteethHeight,ispeed);	
+	}
+	
+	void draw(){
+		drawHole();
+		drawSquareTeeth();
+		rotate();		
+	}
+
+	void drawSquareTeeth() {
+		stroke(#000000);
+		fill(#ffffff);
+		for(int i=0; i < numTeeth; i++){
+
+			float pointX = (radius + teethHeight) * Math.cos(rot + toothSpace * i);
+			float pointY = (radius + teethHeight) * Math.sin(rot + toothSpace * i);
+
+			float t1X = radius * Math.cos(rot + (toothSpace*i)+(toothSpace/3));
+			float t1Y = radius * Math.sin(rot + (toothSpace*i)+(toothSpace/3));
+			float t2X = radius * Math.cos(rot + (toothSpace*i)-(toothSpace/3));
+			float t2Y = radius * Math.sin(rot + (toothSpace*i)-(toothSpace/3));
+
+			float t3X = (radius + teethHeight) * Math.cos(rot + (toothSpace*i)+(toothSpace/5));
+			float t3Y = (radius + teethHeight) * Math.sin(rot + (toothSpace*i)+(toothSpace/5));
+			float t4X = (radius + teethHeight) * Math.cos(rot + (toothSpace*i)-(toothSpace/5));
+			float t4Y = (radius + teethHeight) * Math.sin(rot + (toothSpace*i)-(toothSpace/5));
+
+
+			stroke(#ffffff);
+			quad(cX+t1X, cY+t1Y,cX+t3X, cY+t3Y,cX+t4X, cY+t4Y, cX+t2X, cY+t2Y );
+			stroke(#000000);
+
+			line( cX+t1X, cY+t1Y, cX+t3X, cY+t3Y );
+			line( cX+t3X, cY+t3Y, cX+t4X, cY+t4Y );
+			line( cX+t4X, cY+t4Y, cX+t2X, cY+t2Y );
+
+		}		
+	}
+
+}
+
+class TriangleTeethCog extends Cog {
+
+	TriangleTeethCog(int iradius, int icX, int icY, inumTeeth, iteethHeight, ispeed) {
+		super(iradius, icX,icY,inumTeeth,iteethHeight,ispeed);	
+	}
+	
+	void draw(){
+		drawHole();
+		drawTriangleTeeth();
+		rotate();		
+	}
+
+	void drawTriangleTeeth() {
+		stroke(#000000);
+		fill(#ffffff);
+		for(int i=0; i < numTeeth; i++){
+			float toothSpace = (2 * Math.PI) / numTeeth;
+
+			float pointX = (radius + teethHeight) * Math.cos(rot + toothSpace * i);
+			float pointY = (radius + teethHeight) * Math.sin(rot + toothSpace * i);
+			float t1X = radius * Math.cos(rot + (toothSpace*i)+(toothSpace/3));
+			float t1Y = radius * Math.sin(rot + (toothSpace*i)+(toothSpace/3));
+			float t2X = radius * Math.cos(rot + (toothSpace*i)-(toothSpace/3));
+			float t2Y = radius * Math.sin(rot + (toothSpace*i)-(toothSpace/3));
+		
+			stroke(#ffffff);
+			triangle(cX+t1X, cY+t1Y, cX+pointX, cY+pointY, cX+t2X, cY+t2Y);
+			stroke(#000000);
+			line( cX+t1X, cY+t1Y, cX+pointX, cY+pointY);
+			line( cX+t2X, cY+t2Y, cX+pointX, cY+pointY);
+		}
+	}
+
+}
+
+class Cog
+{
+	
+	int radius;
+	int cX;
+	int cY;
+	int teethHeight;
+	int rot;
+	int dir;
+	float toothWidth;
+	int numTeeth;
+	float toothSpace;
+
+	float speed;
+
+	Cog(int iradius, int icX, int icY, inumTeeth, iteethHeight, ispeed) {
+		radius = iradius;
+		cX = icX;
+		cY = icY;
+		numTeeth = inumTeeth;
+		teethHeight = iteethHeight;
+		rot = 0;
+		setSpeed(ispeed);
+		dir = 1;
+		
+		setNumTeeth(numTeeth);
+
+		
+	}
+
+
+	void engage(cog aCog,float angle){
+
+
+		// change the number of teeth to match the width of the parent
+		// toothWidth = numTeeth / radius;
+		int newnumTeeth = int(Math.floor(aCog.getToothWidth() * radius));
+		setRadius((aCog.getRadius() * newnumTeeth) / aCog.getNumTeeth());
+
+		setNumTeeth(newnumTeeth);		
+
+		float distance = aCog.getContactDistance() + getContactDistance();
+		displacementX = distance * Math.cos(angle);
+		displacementY = distance * Math.sin(angle);
+		cX = aCog.getcX() + displacementX;
+		cY = aCog.getcY() + displacementY;
+		dir = -aCog.getDir();
+
+		rot = angle + Math.PI;
+
+
+		// set the new speed 
+		setSpeed( (aCog.numTeeth/numTeeth) * aCog.getSpeed());
+
+		// engage the teeth at the right point
+		engageTeeth(aCog,angle);
+	}
+
+	void engageTeeth(Cog aCog, float angle){
+
+		// whether it's a spike at point of contact can be found 
+		// by looking at a cosine wave along the circumference
+		float pointOnCirc = angle - aCog.getRot();
+
+		float heightOnACogAtContact = Math.cos(aCog.getNumTeeth()*pointOnCirc);
+
+		float upordown = -aCog.getNumTeeth() * Math.sin(aCog.getNumTeeth()*pointOnCirc);
+
+		float thisHeightOnContact = Math.cos(0);
+
+
+		float ratioCogMove = (Math.PI - acos(heightOnACogAtContact))/getNumTeeth();
+		
+		float changeAngle;
+		if(upordown >= 0){ changeAngle = - ratioCogMove;  };
+		if(upordown < 0){ changeAngle = + ratioCogMove; };
+		
+		rot = rot - changeAngle;
+
+
+	}
+
+	void rotate(){
+		rot += speed * dir; // dir is +-1
+	}
+
+	void draw() {
+		drawEdgeCircle();
+		drawSpokes();
+		rotate();
+	}
+
+	
+	void drawHole() {
+		stroke(#000000);
+		ellipse(cX,cY,radius*2,radius*2);
+		ellipse(cX,cY,radius*0.3,radius*0.3);
+		ellipse(cX,cY,radius*0.2,radius*0.2);
+	}
+
+	void drawEdgeCircle() {
+		stroke(#000000);
+		ellipse(cX,cY,radius*2,radius*2);
+	}
+
+	void drawAxis(){
+		stroke(#000000);
+		line(cX,cY, cX + radius*Math.cos(rot), cY + radius*Math.sin(rot));
+	}
+
+	void drawSpokes() {
+		stroke(#000000);
+		fill(#ffffff);
+	
+		for(int i=0; i < numTeeth; i++){
+
+			float pointX = (radius + teethHeight) * Math.cos(rot + toothSpace * i);
+			float pointY = (radius + teethHeight) * Math.sin(rot + toothSpace * i);
+			float point2X = radius * Math.cos(rot + toothSpace * i);
+			float point2Y = radius * Math.sin(rot + toothSpace * i);
+
+			line(cX+point2X,cY+point2Y,cX+pointX,cY+pointY);
+
+		}		
+	}
+
+
+
+	void setRadius(float iradius){
+		radius = iradius;
+	}
+
+	float getRadius(){
+		return radius;
+	}
+
+	float getFullRadius(){
+		return radius + teethHeight;
+	}
+
+	float getContactRadius(){
+		return radius + (3*teethHeight/4);
+	}
+
+	float getSpeed(){
+		return speed;
+	}
+
+
+	float getToothWidth() {
+		return toothWidth;
+	}
+
+	float getNumTeeth() {
+		return numTeeth;
+	}
+
+	void setNumTeeth(float inumTeeth){
+		numTeeth = inumTeeth;
+		toothWidth = inumTeeth/radius;
+		toothSpace = (2 * Math.PI) / inumTeeth;
+	}
+
+	void setRot(float arot){
+		rot = arot;
+	}
+
+	float getRot(){
+		return rot;
+	}
+
+	int getDir(){
+		return dir;
+	}
+
+	int getcX(){
+		return cX;
+	}
+
+	int getcY(){
+		return cY;
+	}
+
+	int getContactDistance() {
+		return radius + (teethHeight/2);
+	}
+
+	float getToothSpace() {
+		return toothSpace;
+	}
+
+	void setSpeed(float ispeed){
+		speed = ispeed;
+	}
+
+
+}
+
+void mouseReleased(){
+	newCogCloud();
+}
